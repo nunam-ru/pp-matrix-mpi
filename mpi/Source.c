@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     double elapsedTime;
     double totalTime;
 
-    //Инициализируем MPI, отмечаем время начала работы 
+    //MPI Initialize 
     MPI_Init(&argc, &argv);
     starttime = MPI_Wtime();
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
     srand(time(NULL) + rank);
 
-    //Создаем матрицы из рандомных чисел
+    //Create matrices
     for (i = 0; i < N; i++) {
         for (j = 0; j < M; j++) {
             a[i][j] = rand() % 10;
@@ -60,16 +60,16 @@ int main(int argc, char* argv[])
     //    }
     //}
 
-    //Отправляем строчки матрицы A по процессам     
+    //Send rows of matrix A     
     MPI_Scatter(a, N * N / size, MPI_INT, aa, N * N / size, MPI_INT, 0, MPI_COMM_WORLD);
 
-    //Даем матрицу B всем процессам
+    //Send matrix B to all processes
     MPI_Bcast(b, M * K, MPI_INT, 0, MPI_COMM_WORLD);
     
-    //Барьер для синхронизации
+    //Barrier
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //Перемножаем
+    //Multiplication
     for (i = 0; i < K; i++)
     {
         cc[i] = 0;
@@ -79,16 +79,16 @@ int main(int argc, char* argv[])
         }
     }
 
-    //Собираем полученные данные в матрицу С
+    //Gather data to matrix C
     MPI_Gather(cc, K * N / size, MPI_INT, c, K * N / size, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //Считаем время суммарно потраченное всеми процессами
+    //Count time
     elapsedTime = MPI_Wtime() - starttime;
     MPI_Reduce(&elapsedTime, &totalTime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Finalize();
 
-    //Выводим матрицу
+    //Print C
     if (rank == 0) {
         for (i = 0; i < N; i++) {
             for (j = 0; j < K; j++) {
